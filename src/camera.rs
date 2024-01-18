@@ -18,7 +18,7 @@ pub struct Camera {
     image_data: Vec<Vec<u8>>,
     filename: String,
     rng: ThreadRng,
-    samples: u32,
+    pub samples: u32,
     max_depth: u32,
 }
 
@@ -48,7 +48,7 @@ impl Camera {
             image_data,
             filename: "output".to_owned(),
             rng: thread_rng(),
-            samples: 100,
+            samples: 10,
             max_depth: 15,
         }
     }

@@ -1,3 +1,4 @@
+use std::env;
 use glam::Vec3;
 use crate::material::*;
 use crate::object::*;
@@ -12,6 +13,12 @@ mod output;
 
 fn main() {
     let mut camera = Camera::default();
+    let args = env::args().collect::<Vec<String>>();
+
+    if args.len() > 1 {
+        let samples: u32 = args[1].parse().expect("Invalid number of samples");
+        camera.samples = samples;
+    }
     
     // Create a cornell box
     let mut scene: Vec<Box<dyn Object>> = vec![
