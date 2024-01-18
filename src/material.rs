@@ -54,13 +54,15 @@ impl Lambertian {
 }
 
 pub struct Metal {
-    color: (f32, f32, f32)
+    color: (f32, f32, f32),
+    fuzz: f32
 }
 
 impl Material for Metal {
     fn bounce(&self, rng: &mut ThreadRng, incoming: &Ray, position: Vec3, normal: Vec3) -> Ray {
         let direction = reflect(incoming.direction, normal);
-        return Ray::new(position, direction);
+        let fuzzed_direction = normalize_if_tiny(direction + random_unit_vector(rng) * self.fuzz);
+        return Ray::new(position, fuzzed_direction);
     }
 
     fn albedo(&self) -> (f32, f32, f32) {
@@ -69,8 +71,11 @@ impl Material for Metal {
 }
 
 impl Metal {
-    pub fn new(blue: f32, green: f32, red: f32) -> Metal {
-        Metal{color: (blue, green, red)}
+    pub fn new(color: (f32, f32, f32), fuzz: f32) -> Metal {
+        Metal{
+            color,
+            fuzz
+        }
     }
 }
 
