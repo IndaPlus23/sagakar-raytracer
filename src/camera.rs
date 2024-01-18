@@ -9,8 +9,8 @@ use crate::object::*;
 type Color = Vec3;
 
 pub struct Camera {
-    image_width: u16,
-    image_height: u16,
+    pub image_width: u16,
+    pub image_height: u16,
     center: Vec3,
     pixel_delta_u: Vec3,
     pixel_delta_v: Vec3,
@@ -51,6 +51,35 @@ impl Camera {
             samples: 10,
             max_depth: 15,
         }
+    }
+
+    pub fn set_width(&mut self, width: u16) {
+        self.image_width = width;
+        let viewport_height: f32 = 2.0;
+        let viewport_width: f32 = viewport_height * (width as f32 / self.image_height as f32);
+        let focal_length: f32 = 1.0;
+        let center= Vec3::new(0.0, 0.0, 0.0);
+        let viewport_u = Vec3::new(viewport_width, 0.0, 0.0);
+        let viewport_v = Vec3::new(0.0, viewport_height, 0.0);
+        self.pixel_delta_u = viewport_u / width as f32;
+        self.pixel_delta_v = viewport_v / self.image_height as f32;
+        let viewport_lower_left = center - Vec3::new(0.0, 0.0, focal_length) - viewport_u / 2.0 - viewport_v / 2.0;
+        self.viewport_pixel_origin = viewport_lower_left + (self.pixel_delta_u + self.pixel_delta_v) / 2.0;
+    }
+
+    pub fn set_height(&mut self, height: u16) {
+        self.image_height = height;
+        self.image_data.resize(height as usize, vec![]);
+        let viewport_height: f32 = 2.0;
+        let viewport_width: f32 = viewport_height * (self.image_width as f32 / height as f32);
+        let focal_length: f32 = 1.0;
+        let center= Vec3::new(0.0, 0.0, 0.0);
+        let viewport_u = Vec3::new(viewport_width, 0.0, 0.0);
+        let viewport_v = Vec3::new(0.0, viewport_height, 0.0);
+        self.pixel_delta_u = viewport_u / self.image_width as f32;
+        self.pixel_delta_v = viewport_v / height as f32;
+        let viewport_lower_left = center - Vec3::new(0.0, 0.0, focal_length) - viewport_u / 2.0 - viewport_v / 2.0;
+        self.viewport_pixel_origin = viewport_lower_left + (self.pixel_delta_u + self.pixel_delta_v) / 2.0;
     }
 
     pub fn render(&mut self, objects: &Vec<Box<dyn Object>>, format: Format) -> Result<(), Error> {
@@ -129,7 +158,7 @@ fn background_gradient(ray: &Ray) -> Color {
     // let green = lerp(155.0, 206.0, t) as u8;
     // let red = lerp(155.0, 135.0, t) as u8;
     // return (blue, green, red);
-    return Color::new(0.4, 0.4, 0.4);
+    return Color::new(0.0, 0.0, 0.0);
 }
 
 fn gamma_correct(color: Color) -> Color {
