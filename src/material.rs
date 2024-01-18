@@ -3,23 +3,25 @@ use glam::Vec3;
 use crate::ray::Ray;
 use crate::interval::Interval;
 
+type Color = Vec3;
+
 pub trait Material {
     // Get the bounced ray direction given an incoming ray and an outward normal
     fn bounce(&self, rng: &mut ThreadRng, incoming: &Ray, position: Vec3, normal: Vec3) -> Ray;
     // Get the proportion of bounced blue, green and red light
-    fn albedo(&self) -> (f32, f32, f32);
+    fn albedo(&self) -> Color;
     // Does the material emit light?
     fn is_emitter(&self) -> bool {
         false
     }
     // If it is, what light does it emit?
-    fn emit(&self) -> (u8, u8, u8) {
-        (0, 0, 0)
+    fn emit(&self) -> Color {
+        Color::ZERO
     }
 }
 
 pub struct Diffuse {
-    color: (f32, f32, f32),
+    color: Color,
 }
 
 impl Material for Diffuse {
@@ -28,19 +30,19 @@ impl Material for Diffuse {
         return Ray::new(position, direction);
     }
 
-    fn albedo(&self) -> (f32, f32, f32) {
+    fn albedo(&self) -> Color {
         self.color
     }
 }
 
 impl Diffuse {
-    pub fn new(blue: f32, green: f32, red: f32) -> Diffuse {
-        Diffuse{color: (blue, green, red)}
+    pub fn new(red: f32, green: f32, blue: f32) -> Diffuse {
+        Diffuse{color: Color::new(red, green, blue)}
     }
 }
 
 pub struct Lambertian {
-    color: (f32, f32, f32)
+    color: Color
 }
 
 impl Material for Lambertian {
@@ -50,19 +52,19 @@ impl Material for Lambertian {
         return Ray::new(position, direction);
     }
 
-    fn albedo(&self) -> (f32, f32, f32) {
+    fn albedo(&self) -> Color {
         self.color
     }
 }
 
 impl Lambertian {
-    pub fn new(blue: f32, green: f32, red: f32) -> Lambertian {
-        Lambertian{color: (blue, green, red)}
+    pub fn new(red: f32, green: f32, blue: f32) -> Lambertian {
+        Lambertian{color: Color::new(red, green, blue)}
     }
 }
 
 pub struct Metal {
-    color: (f32, f32, f32),
+    color: Color,
     fuzz: f32
 }
 
@@ -73,13 +75,13 @@ impl Material for Metal {
         return Ray::new(position, fuzzed_direction);
     }
 
-    fn albedo(&self) -> (f32, f32, f32) {
+    fn albedo(&self) -> Color {
         self.color
     }
 }
 
 impl Metal {
-    pub fn new(color: (f32, f32, f32), fuzz: f32) -> Metal {
+    pub fn new(color: Color, fuzz: f32) -> Metal {
         Metal{
             color,
             fuzz
@@ -88,12 +90,12 @@ impl Metal {
 }
 
 pub struct DiffuseLight {
-    light: (u8, u8, u8)
+    light: Color
 }
 
 impl Material for DiffuseLight {
-    fn albedo(&self) -> (f32, f32, f32) {
-        (1.0, 1.0, 1.0)
+    fn albedo(&self) -> Color {
+        Vec3::new(1.0, 1.0, 1.0)
     }
 
     fn bounce(&self, rng: &mut ThreadRng, incoming: &Ray, position: Vec3, normal: Vec3) -> Ray {
@@ -105,19 +107,19 @@ impl Material for DiffuseLight {
         true
     }
 
-    fn emit(&self) -> (u8, u8, u8) {
+    fn emit(&self) -> Color {
         self.light
     }
 }
 
 impl DiffuseLight {
-    pub fn new(light: (u8, u8, u8)) -> DiffuseLight {
-        DiffuseLight{light}
+    pub fn new(red: f32, green: f32, blue: f32) -> DiffuseLight {
+        DiffuseLight{light: Color::new(red, green, blue)}
     }
 }
 
 fn random_unit_vector(rng: &mut ThreadRng) -> Vec3 {
-    Vec3::new(rng.gen(), rng.gen(), rng.gen()).normalize()
+    Vec3::new(rng.gen_range(-1.0..=1.0), rng.gen_range(-1.0..=1.0), rng.gen_range(-1.0..=1.0)).normalize()
 }
 
 fn random_on_hemisphere(rng: &mut ThreadRng, normal: &Vec3) -> Vec3 {

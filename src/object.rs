@@ -4,6 +4,8 @@ use crate::ray::{Ray, Hit};
 use crate::interval::Interval;
 use crate::material::Material;
 
+type Color = Vec3;
+
 
 pub trait Object {
     // If ray intersects, return point of intersection
@@ -14,9 +16,9 @@ pub trait Object {
     // Return the material of the object
     fn bounce(&self, rng: &mut ThreadRng, incoming: &Ray, position: Vec3, normal: Vec3) -> Ray;
     // Return the blue, green and red albedos of the object
-    fn albedo(&self) -> (f32, f32, f32);
+    fn albedo(&self) -> Color;
     fn is_emitter(&self) -> bool;
-    fn emit(&self) -> (u8, u8, u8);
+    fn emit(&self) -> Color;
 }
 
 pub struct Sphere<T: Material> {
@@ -70,7 +72,7 @@ impl<T: Material> Object for Sphere<T> {
         self.material.bounce(rng, incoming, position, normal)
     }
 
-    fn albedo(&self) -> (f32, f32, f32) {
+    fn albedo(&self) -> Color {
         self.material.albedo()
     }
 
@@ -78,7 +80,7 @@ impl<T: Material> Object for Sphere<T> {
         self.material.is_emitter()
     }
 
-    fn emit(&self) -> (u8, u8, u8) {
+    fn emit(&self) -> Color {
         self.material.emit()
     }
 }
@@ -111,7 +113,7 @@ impl <T: Material> Object for Rect<T> {
         let dividend = self.d - self.normal.dot(ray.origin);
         let divisor = self.normal.dot(ray.direction);
         // If ray is near parallel, return None
-        if divisor < 0.000001 {
+        if divisor.abs() < 0.000001 {
             return  None;
         }
         let t = dividend / divisor;
@@ -121,12 +123,13 @@ impl <T: Material> Object for Rect<T> {
         }
         let position = ray.pos(t);
         let local_position = position - self.origin;
-        let alpha = local_position.dot(self.u) / self.u.length().powi(2);
-        let beta = local_position.dot(self.v) / self.v.length().powi(2);
+        let alpha = local_position.dot(self.v) / self.v.length().powi(2);
+        let beta = local_position.dot(self.u) / self.u.length().powi(2);
         let coordinate_range = Interval::new(0.0, 1.0);
         if !coordinate_range.contains(alpha) || !coordinate_range.contains(beta) {
             return None;
         }
+        //println!("Plane hit!");
         return Some(Hit::new(
             ray,
             t,
@@ -143,7 +146,7 @@ impl <T: Material> Object for Rect<T> {
         self.normal
     }
 
-    fn albedo(&self) -> (f32, f32, f32) {
+    fn albedo(&self) -> Color {
         self.material.albedo()
     }
 
@@ -155,14 +158,14 @@ impl <T: Material> Object for Rect<T> {
         self.material.is_emitter()
     }
 
-    fn emit(&self) -> (u8, u8, u8) {
+    fn emit(&self) -> Color {
         self.material.emit()
     }
 }
 
 impl <T: Material> Rect<T> {
     pub fn new(origin: Vec3, u: Vec3, v: Vec3, material: T) -> Rect<T> {
-        let normal = v.cross(u).normalize();
+        let normal = u.cross(v).normalize();
         // Recall the equation for D
         // Knowing that the origin must be on the correct plane, D is simply the dot product of the origin and the normal
         let d = normal.dot(origin);

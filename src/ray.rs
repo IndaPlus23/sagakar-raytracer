@@ -1,5 +1,7 @@
 use glam::Vec3;
 
+type Color = Vec3;
+
 pub struct Ray {
     pub origin: Vec3,
     pub direction: Vec3,
@@ -27,10 +29,10 @@ pub struct Hit {
     pub position: Vec3,
     pub normal: Vec3,
     pub front_face: bool,
-    pub albedo: (f32, f32, f32),
+    pub albedo: Color,
     pub outgoing: Ray,
     pub is_emitter: bool,
-    pub emitted: (u8, u8, u8)
+    pub emitted: Color
 }
 
 impl Hit {
@@ -39,10 +41,10 @@ impl Hit {
         t: f32,
         position: Vec3,
         outward_normal: Vec3,
-        albedo: (f32, f32, f32),
+        albedo: Color,
         outgoing: Ray,
         is_emitter: bool,
-        emitted: (u8, u8, u8)
+        emitted: Color
     ) -> Hit {
         let front_face = outward_normal.dot(ray.direction) < 0.0;
         let normal = match front_face {

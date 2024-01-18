@@ -6,6 +6,8 @@ use crate::ray::{Ray, Hit};
 use crate::interval::Interval;
 use crate::object::*;
 
+type Color = Vec3;
+
 pub struct Camera {
     image_width: u16,
     image_height: u16,
@@ -46,7 +48,7 @@ impl Camera {
             image_data,
             filename: "output".to_owned(),
             rng: thread_rng(),
-            samples: 10,
+            samples: 100,
             max_depth: 15,
         }
     }
@@ -57,21 +59,17 @@ impl Camera {
             print!("\r{:3} lines remaining", self.image_height - image_y);
             for image_x in 0..self.image_width {
                 // Sums to average the colors later
-                let (mut blue_sum, mut green_sum, mut red_sum) = (0u32, 0u32, 0u32);
+                let mut total_color = Color::new(0.0, 0.0, 0.0);
                 for _i in 0..self.samples {
                     let ray = self.get_random_ray(image_x, image_y);
-                    let (blue, green, red) = self.ray_to_color(&ray, &objects, self.max_depth);
-                    blue_sum += blue as u32;
-                    green_sum += green as u32;
-                    red_sum += red as u32;
+                    total_color += self.ray_to_color(&ray, &objects, self.max_depth);
                 }
                 // Average and add to image in LE order
-                let blue = (blue_sum / self.samples) as u8;
-                let green = (green_sum / self.samples) as u8;
-                let red = (red_sum / self.samples) as u8;
-                self.image_data[image_y as usize].push(blue);
-                self.image_data[image_y as usize].push(green);
-                self.image_data[image_y as usize].push(red);
+                let average_color = gamma_correct(total_color / self.samples as f32);
+                let bytes = color_to_bytes(average_color);
+                self.image_data[image_y as usize].push(bytes.2);
+                self.image_data[image_y as usize].push(bytes.1);
+                self.image_data[image_y as usize].push(bytes.0);
 
             }
         }
@@ -100,34 +98,42 @@ impl Camera {
         return hit;
     }
 
-    fn ray_to_color(&mut self, ray: &Ray, objects: &Vec<Box<dyn Object>>, depth: u32) -> (u8, u8, u8) {
+    fn ray_to_color(&mut self, ray: &Ray, objects: &Vec<Box<dyn Object>>, depth: u32) -> Color {
         if depth == 0 {
-            return (0, 0, 0);
+            return Color::new(0.0, 0.0, 0.0);
         }
         if let Some(hit) = self.get_intersection(ray, objects, &Interval::new(0.001, f32::MAX)) {
-            if hit.is_emitter {
-                return hit.emitted;
-            }
             let bounced_ray = hit.outgoing;
-            let (reflect_blue, reflect_green, reflect_red) = hit.albedo;
-            let (bounced_blue, bounced_green, bounced_red) = self.ray_to_color(&bounced_ray, objects, depth - 1);
-            let final_blue = (bounced_blue as f32 * reflect_blue) as u8;
-            let final_green = (bounced_green as f32 * reflect_green) as u8;
-            let final_red = (bounced_red as f32 * reflect_red) as u8;
-            return (final_blue, final_green, final_red)
+            let albedo = hit.albedo;
+            let bounced = self.ray_to_color(&bounced_ray, objects, depth - 1);
+            let final_color = Color::new(bounced.x * albedo.x, bounced.y * albedo.y, bounced.z * albedo.z);
+            return final_color + hit.emitted;
         }
         return background_gradient(ray);
     }
 }
 
-fn background_gradient(ray: &Ray) -> (u8, u8, u8) {
+/// Accepts a color in vector form and returns it as (red, green, blue) bytes
+fn color_to_bytes(color: Color) -> (u8, u8, u8) {
+    let color = color.clamp(Vec3::ZERO, Vec3::ONE);
+    let red = lerp(0.0, 255.0, color.x) as u8;
+    let green = lerp(0.0, 255.0, color.y) as u8;
+    let blue = lerp(0.0, 255.0, color.z) as u8;
+    return (red, green, blue);
+}
+
+fn background_gradient(ray: &Ray) -> Color {
     // let direction = ray.direction.normalize();
     // let t = direction.y;
     // let blue = lerp(155.0, 235.0, t) as u8;
     // let green = lerp(155.0, 206.0, t) as u8;
     // let red = lerp(155.0, 135.0, t) as u8;
     // return (blue, green, red);
-    return (0, 0, 0);
+    return Color::new(0.4, 0.4, 0.4);
+}
+
+fn gamma_correct(color: Color) -> Color {
+    Color::new(color.x.sqrt(), color.y.sqrt(), color.z.sqrt())
 }
 
 // Linearly interpolates t ∈ [0, 1] to the range [v0, v1]
