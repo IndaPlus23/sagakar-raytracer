@@ -29,10 +29,21 @@ pub struct Hit {
     pub front_face: bool,
     pub albedo: (f32, f32, f32),
     pub outgoing: Ray,
+    pub is_emitter: bool,
+    pub emitted: (u8, u8, u8)
 }
 
 impl Hit {
-    pub fn new(ray: &Ray, t: f32, position: Vec3, outward_normal: Vec3, albedo: (f32, f32, f32), outgoing: Ray) -> Hit {
+    pub fn new(
+        ray: &Ray,
+        t: f32,
+        position: Vec3,
+        outward_normal: Vec3,
+        albedo: (f32, f32, f32),
+        outgoing: Ray,
+        is_emitter: bool,
+        emitted: (u8, u8, u8)
+    ) -> Hit {
         let front_face = outward_normal.dot(ray.direction) < 0.0;
         let normal = match front_face {
             true => outward_normal,
@@ -44,7 +55,9 @@ impl Hit {
             normal,
             front_face,
             albedo,
-            outgoing
+            outgoing,
+            is_emitter,
+            emitted
         }
     }
 }

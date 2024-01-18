@@ -22,8 +22,8 @@ pub struct Camera {
 
 impl Camera {
     pub fn default() -> Camera {
-        let image_width: u16 = 320;
-        let image_height: u16 = 240;
+        let image_width: u16 = 256;
+        let image_height: u16 = 256;
         let viewport_height: f32 = 2.0;
         let viewport_width: f32 = viewport_height * (image_width as f32 / image_height as f32);
         let focal_length: f32 = 1.0;
@@ -46,8 +46,8 @@ impl Camera {
             image_data,
             filename: "output".to_owned(),
             rng: thread_rng(),
-            samples: 100,
-            max_depth: 30,
+            samples: 10,
+            max_depth: 15,
         }
     }
 
@@ -105,6 +105,9 @@ impl Camera {
             return (0, 0, 0);
         }
         if let Some(hit) = self.get_intersection(ray, objects, &Interval::new(0.001, f32::MAX)) {
+            if hit.is_emitter {
+                return hit.emitted;
+            }
             let bounced_ray = hit.outgoing;
             let (reflect_blue, reflect_green, reflect_red) = hit.albedo;
             let (bounced_blue, bounced_green, bounced_red) = self.ray_to_color(&bounced_ray, objects, depth - 1);
@@ -118,12 +121,13 @@ impl Camera {
 }
 
 fn background_gradient(ray: &Ray) -> (u8, u8, u8) {
-    let direction = ray.direction.normalize();
-    let t = direction.y;
-    let blue = lerp(155.0, 235.0, t) as u8;
-    let green = lerp(155.0, 206.0, t) as u8;
-    let red = lerp(155.0, 135.0, t) as u8;
-    return (blue, green, red);
+    // let direction = ray.direction.normalize();
+    // let t = direction.y;
+    // let blue = lerp(155.0, 235.0, t) as u8;
+    // let green = lerp(155.0, 206.0, t) as u8;
+    // let red = lerp(155.0, 135.0, t) as u8;
+    // return (blue, green, red);
+    return (0, 0, 0);
 }
 
 // Linearly interpolates t ∈ [0, 1] to the range [v0, v1]

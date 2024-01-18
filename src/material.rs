@@ -8,6 +8,14 @@ pub trait Material {
     fn bounce(&self, rng: &mut ThreadRng, incoming: &Ray, position: Vec3, normal: Vec3) -> Ray;
     // Get the proportion of bounced blue, green and red light
     fn albedo(&self) -> (f32, f32, f32);
+    // Does the material emit light?
+    fn is_emitter(&self) -> bool {
+        false
+    }
+    // If it is, what light does it emit?
+    fn emit(&self) -> (u8, u8, u8) {
+        (0, 0, 0)
+    }
 }
 
 pub struct Diffuse {
@@ -76,6 +84,35 @@ impl Metal {
             color,
             fuzz
         }
+    }
+}
+
+pub struct DiffuseLight {
+    light: (u8, u8, u8)
+}
+
+impl Material for DiffuseLight {
+    fn albedo(&self) -> (f32, f32, f32) {
+        (1.0, 1.0, 1.0)
+    }
+
+    fn bounce(&self, rng: &mut ThreadRng, incoming: &Ray, position: Vec3, normal: Vec3) -> Ray {
+        let direction = random_on_hemisphere(rng, &normal);
+        return Ray::new(position, direction);
+    }
+
+    fn is_emitter(&self) -> bool {
+        true
+    }
+
+    fn emit(&self) -> (u8, u8, u8) {
+        self.light
+    }
+}
+
+impl DiffuseLight {
+    pub fn new(light: (u8, u8, u8)) -> DiffuseLight {
+        DiffuseLight{light}
     }
 }
 
