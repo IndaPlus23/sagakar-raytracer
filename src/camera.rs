@@ -120,9 +120,9 @@ impl Camera {
 fn background_gradient(ray: &Ray) -> (u8, u8, u8) {
     let direction = ray.direction.normalize();
     let t = direction.y;
-    let blue = lerp(139.0, 255.0, t) as u8;
-    let green = lerp(0.0, 255.0, t) as u8;
-    let red = lerp(0.0, 255.0, t) as u8;
+    let blue = lerp(155.0, 235.0, t) as u8;
+    let green = lerp(155.0, 206.0, t) as u8;
+    let red = lerp(155.0, 135.0, t) as u8;
     return (blue, green, red);
 }
 

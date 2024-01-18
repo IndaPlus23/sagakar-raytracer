@@ -20,7 +20,7 @@ pub trait Object {
 pub struct Sphere<T: Material> {
     center: Vec3,
     radius: f32,
-    material: Box<T>
+    material: T
 }
 
 impl<T: Material + 'static> Object for Sphere<T> {
@@ -69,7 +69,7 @@ impl<T: Material> Sphere<T>{
         Sphere {
             center,
             radius,
-            material: Box::new(material)
+            material: material
         }
     }
 }
