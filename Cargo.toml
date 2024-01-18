@@ -4,6 +4,5 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-dyn-clone = "1.0.16"
 glam = "0.25.0"
 rand = "0.8.5"
