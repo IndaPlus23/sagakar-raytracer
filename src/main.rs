@@ -1,3 +1,8 @@
+// This raytracer is adapted from "Ray Tracing in One Weekend" and "Ray Tracing: The next week"
+// by Peter Shirley, Trevor David Black and Steve Hollasch.
+// Both books can be found at https://raytracing.github.io/
+// I have translated their code into rust, made some structural changes where i saw fit and simplified certain aspects.
+
 use std::env;
 use glam::Vec3;
 use crate::material::*;
